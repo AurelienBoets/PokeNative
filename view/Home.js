@@ -16,8 +16,8 @@ const Home = () => {
     },
     btn: {
       borderRadius: 10,
-      height: 45,
-      width: 170,
+      height: 60,
+      width: 160,
       marginTop: 10,
       justifyContent: 'center',
       alignItems: 'center',
@@ -25,7 +25,7 @@ const Home = () => {
     text: {
       color: 'white',
       textAlign: 'center',
-      fontSize: 30,
+      fontSize: 25,
     },
   });
   return (

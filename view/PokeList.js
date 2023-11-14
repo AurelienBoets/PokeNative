@@ -1,33 +1,42 @@
 import axios from 'axios';
 import {useState, useEffect} from 'react';
-import {FlatList, Pressable, Text, View} from 'react-native';
+import {FlatList, StyleSheet, Text, View} from 'react-native';
+import PokeCard from '../component/PokeCard';
+import Loader from '../component/Loader';
 
 const PokeList = () => {
   const [pokemons, setPokemons] = useState([]);
   const [isLoading, setLoading] = useState(true);
+
+  const styles = StyleSheet.create({
+    container: {
+      margin: 10,
+    },
+  });
   useEffect(() => {
     axios
       .get('https://pokeapi.co/api/v2/pokemon?offset=10&limit=50')
-      .then(async resp => {
-        await resp.data.results.forEach(item => {
-          axios
-            .get(item.url)
-            .then(response => {
-              setPokemons(oldArray => [
-                ...oldArray,
-                {
-                  img: response.data.sprites.front_default,
-                  name: response.data.name,
-                  type: response.data.types,
-                  id: response.data.id,
-                },
-              ]);
-            })
-            .catch(err => {
-              console.log(err);
-            });
-        });
+      .then(resp => {
+        const pokeDetailRequest = resp.data.results.map(item =>
+          axios.get(item.url),
+        );
+        Promise.all(pokeDetailRequest)
+          .then(response => {
+            const sortedPoke = response.map(res => ({
+              img: res.data.sprites.front_default,
+              name:
+                res.data.name.charAt(0).toUpperCase() + res.data.name.slice(1),
+              type: res.data.types,
+              id: res.data.id,
+            }));
+
+            setPokemons(sortedPoke);
+          })
+          .catch(err => {
+            console.log(err);
+          });
       })
+
       .catch(err => {
         console.log(err);
       });
@@ -39,33 +48,19 @@ const PokeList = () => {
   }, [pokemons]);
 
   if (isLoading) {
-    return (
-      <View>
-        <Text>Loading...</Text>
-      </View>
-    );
+    return <Loader />;
   }
   return (
-    <View>
+    <View style={styles.container}>
       <FlatList
         numColumns={2}
         data={pokemons}
         renderItem={({item}) => {
           return (
-            <Pressable>
-              <View>
-                <Text>{item.name}</Text>
-                <FlatList
-                  data={item.type}
-                  renderItem={({item}) => {
-                    return <Text>{item.type.name}</Text>;
-                  }}
-                  keyExtractor={(item, index) => {
-                    return index;
-                  }}
-                />
-              </View>
-            </Pressable>
+            <PokeCard
+              pokemon={item}
+              color={item.type[item.type.length - 1].type.name}
+            />
           );
         }}
         keyExtractor={(item, index) => {
